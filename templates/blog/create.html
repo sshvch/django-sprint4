@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+  {% if form.instance.pk %}Редактировать запись{% else %}Создать запись{% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="card col-4">
+    <div class="card-header">
+      {% if form.instance.pk %}Редактировать запись{% else %}Создать запись{% endif %}
+    </div>
+    <div class="card-body">
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        {% bootstrap_button button_type="submit" content="Отправить" %}
+      </form>
+    </div>
+  </div>
+{% endblock %}

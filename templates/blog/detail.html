@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block title %}
+{{ post.title }} | {% if post.location and post.location.is_published %}{{ post.location.name }} |{% endif %} {{ post.pub_date|date:"d E Y" }}
+{% endblock %}
+
+{% block content %}
+  
+  {% if view.kwargs.post_id and not view.kwargs.comment_id and '/delete/' in request.path %}
+    <div class="card col-6 mt-4 border-danger">
+      <div class="card-header bg-danger text-white">Удаление публикации</div>
+      <div class="card-body">
+        <h5>Вы уверены, что хотите удалить пост «{{ post.title }}»?</h5>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Да, удалить</button>
+          <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-secondary">Отмена</a>
+        </form>
+      </div>
+    </div>
+
+  {% else %}
+    <article>
+      <p>{{ post.pub_date|date:"d E Y" }} | {% if post.location and post.location.is_published %}{{ post.location.name }}{% else %}Планета Земля{% endif %}<br>
+        <small>От автора @{{ post.author.username }} в категории {% include "includes/category_link.html" %}</small></p>
+      
+      <h3>{{ post.title }}</h3>
+
+      {% if post.image %}
+        <div class="my-4">
+          <img src="{{ post.image.url }}" class="img-fluid" alt="{{ post.title }}" style="max-height: 500px;">
+        </div>
+      {% endif %}
+
+      <p>{{ post.text|linebreaksbr }}</p>
+
+      {% if request.user == post.author %}
+        <div class="mt-3">
+          <a href="{% url 'blog:post_edit' post.id %}" class="btn btn-primary btn-sm">Редактировать пост</a>
+          <a href="{% url 'blog:post_delete' post.id %}" class="btn btn-danger btn-sm">Удалить пост</a>
+        </div>
+      {% endif %}
+    </article> 
+
+    <hr>
+    <h4 class="mt-4">Комментарии ({{ post.comments.count }})</h4>
+
+    {% for comment in comments %}
+      <div class="card mb-2 col-8">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">
+            <b>{{ comment.author.username }}</b> | {{ comment.created_at|date:"d E Y H:i" }}
+          </h6>
+          
+          {% if view.kwargs.comment_id == comment.id and '/edit_comment/' in request.path %}
+            <form method="post">
+              {% csrf_token %}
+              {% bootstrap_form form %}
+              {% bootstrap_button button_type="submit" content="Сохранить" %}
+              <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-secondary">Отмена</a>
+            </form>
+          
+          {% elif view.kwargs.comment_id == comment.id and '/delete_comment/' in request.path %}
+            <div class="alert alert-danger">
+              <p>Вы уверены, что хотите удалить этот комментарий?</p>
+              <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">Да, удалить</button>
+                <a href="{% url 'blog:post_detail' post.id %}" class="btn btn-secondary btn-sm">Отмена</a>
+              </form>
+            </div>
+          
+
+          {% else %}
+            <p class="card-text">{{ comment.text }}</p>
+            {% if request.user == comment.author %}
+              <small>
+                <a href="{% url 'blog:edit_comment' post.id comment.id %}">Редактировать</a> | 
+                <a href="{% url 'blog:delete_comment' post.id comment.id %}" class="text-danger">Удалить</a>
+              </small>
+            {% endif %}
+          {% endif %}
+          
+        </div>
+      </div>
+    {% empty %}
+      <p>Пока нет комментариев.</p>
+    {% endfor %}
+
+    {% if user.is_authenticated %}
+      <div class="card mt-4 col-6">
+        <div class="card-body">
+          <h5 class="card-title">Оставить комментарий</h5>
+          <form method="post" action="{% url 'blog:add_comment' post.id %}">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            {% bootstrap_button button_type="submit" content="Отправить" %}
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <p><a href="{% url 'login' %}">Войдите</a>, чтобы оставить комментарий.</p>
+    {% endif %}
+  {% endif %}
+{% endblock %}

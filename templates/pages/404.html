@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Страница не найдена{% endblock %}
+{% block content %}
+  <h1>404 — Страница не найдена</h1>
+  <p>Страницы с адресом <code>{{ request.path }}</code> не существует.</p>
+  <a href="{% url 'blog:index' %}">На главную</a>
+{% endblock %}
